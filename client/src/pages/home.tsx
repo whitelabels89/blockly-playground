@@ -23,7 +23,7 @@ export default function Home() {
         return;
       }
 
-      // Custom print block definition
+      // Override the default text_print block to use our preview panel
       window.Blockly.Blocks['text_print'] = {
         init: function() {
           this.appendValueInput("TEXT")
@@ -37,7 +37,7 @@ export default function Home() {
         }
       };
 
-      // JavaScript generator for print block
+      // Override the JavaScript generator for text_print to use our preview function
       window.Blockly.JavaScript['text_print'] = function(block: any) {
         var value_text = window.Blockly.JavaScript.valueToCode(block, 'TEXT', window.Blockly.JavaScript.ORDER_ATOMIC);
         if (!value_text) {
@@ -45,6 +45,12 @@ export default function Home() {
         }
         var code = 'window.appendToPreview(' + value_text + ');\n';
         return code;
+      };
+
+      // Also override the default text block generator to prevent alert popups
+      const originalTextGenerator = window.Blockly.JavaScript['text'];
+      window.Blockly.JavaScript['text'] = function(block: any) {
+        return originalTextGenerator ? originalTextGenerator.call(this, block) : ['""', window.Blockly.JavaScript.ORDER_ATOMIC];
       };
 
       // Initialize workspace
@@ -131,6 +137,9 @@ export default function Home() {
     if (!workspaceRef.current || !window.Blockly) return;
 
     try {
+      // Clear workspace first
+      workspaceRef.current.clear();
+      
       // Create the initial block programmatically
       const printBlock = workspaceRef.current.newBlock('text_print');
       printBlock.moveBy(50, 50);
@@ -141,13 +150,17 @@ export default function Home() {
       // Connect the blocks
       const textOutput = textBlock.outputConnection;
       const printInput = printBlock.getInput('TEXT').connection;
-      textOutput.connect(printInput);
+      if (textOutput && printInput) {
+        textOutput.connect(printInput);
+      }
       
       // Initialize the blocks
       printBlock.initSvg();
       textBlock.initSvg();
       printBlock.render();
       textBlock.render();
+      
+      console.log('Initial blocks created successfully');
     } catch (error) {
       console.log('Could not add initial block:', error);
     }
