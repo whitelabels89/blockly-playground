@@ -18,20 +18,10 @@ export default function Home() {
   useEffect(() => {
     // Wait for Blockly to be loaded
     const initBlockly = () => {
-      if (!window.Blockly || !blocklyDivRef.current) {
+      if (!window.Blockly || !blocklyDivRef.current || !window.Blockly.JavaScript) {
         setTimeout(initBlockly, 100);
         return;
       }
-
-      // Override the built-in text_print generator to use our preview panel
-      window.Blockly.JavaScript['text_print'] = function(block: any) {
-        var value_text = window.Blockly.JavaScript.valueToCode(block, 'TEXT', window.Blockly.JavaScript.ORDER_ATOMIC);
-        if (!value_text) {
-          value_text = '""';
-        }
-        var code = 'window.appendToPreview(' + value_text + ');\n';
-        return code;
-      };
 
       // Create a custom preview_print block
       window.Blockly.Blocks['preview_print'] = {
@@ -47,15 +37,30 @@ export default function Home() {
         }
       };
 
-      // JavaScript generator for our custom preview_print block
-      window.Blockly.JavaScript['preview_print'] = function(block: any) {
-        var value_text = window.Blockly.JavaScript.valueToCode(block, 'TEXT', window.Blockly.JavaScript.ORDER_ATOMIC);
-        if (!value_text) {
-          value_text = '""';
-        }
-        var code = 'window.appendToPreview(' + value_text + ');\n';
-        return code;
-      };
+      // Ensure JavaScript generator is available and register our block
+      if (window.Blockly.JavaScript) {
+        // Override the built-in text_print generator to use our preview panel
+        window.Blockly.JavaScript['text_print'] = function(block: any) {
+          var value_text = window.Blockly.JavaScript.valueToCode(block, 'TEXT', window.Blockly.JavaScript.ORDER_ATOMIC);
+          if (!value_text) {
+            value_text = '""';
+          }
+          var code = 'window.appendToPreview(' + value_text + ');\n';
+          return code;
+        };
+
+        // JavaScript generator for our custom preview_print block
+        window.Blockly.JavaScript['preview_print'] = function(block: any) {
+          var value_text = window.Blockly.JavaScript.valueToCode(block, 'TEXT', window.Blockly.JavaScript.ORDER_ATOMIC);
+          if (!value_text) {
+            value_text = '""';
+          }
+          var code = 'window.appendToPreview(' + value_text + ');\n';
+          return code;
+        };
+        
+        console.log('Blockly generators registered successfully');
+      }
 
       // Initialize workspace
       workspaceRef.current = window.Blockly.inject(blocklyDivRef.current, {
