@@ -23,21 +23,7 @@ export default function Home() {
         return;
       }
 
-      // Override the default text_print block to use our preview panel
-      window.Blockly.Blocks['text_print'] = {
-        init: function() {
-          this.appendValueInput("TEXT")
-            .setCheck("String")
-            .appendField("print");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
-          this.setColour(160);
-          this.setTooltip("Print text to preview panel");
-          this.setHelpUrl("");
-        }
-      };
-
-      // Override the JavaScript generator for text_print to use our preview function
+      // Override the built-in text_print generator to use our preview panel
       window.Blockly.JavaScript['text_print'] = function(block: any) {
         var value_text = window.Blockly.JavaScript.valueToCode(block, 'TEXT', window.Blockly.JavaScript.ORDER_ATOMIC);
         if (!value_text) {
@@ -47,10 +33,28 @@ export default function Home() {
         return code;
       };
 
-      // Also override the default text block generator to prevent alert popups
-      const originalTextGenerator = window.Blockly.JavaScript['text'];
-      window.Blockly.JavaScript['text'] = function(block: any) {
-        return originalTextGenerator ? originalTextGenerator.call(this, block) : ['""', window.Blockly.JavaScript.ORDER_ATOMIC];
+      // Create a custom preview_print block
+      window.Blockly.Blocks['preview_print'] = {
+        init: function() {
+          this.appendValueInput("TEXT")
+            .setCheck("String")
+            .appendField("tampilkan");
+          this.setPreviousStatement(true, null);
+          this.setNextStatement(true, null);
+          this.setColour(160);
+          this.setTooltip("Tampilkan teks di panel preview");
+          this.setHelpUrl("");
+        }
+      };
+
+      // JavaScript generator for our custom preview_print block
+      window.Blockly.JavaScript['preview_print'] = function(block: any) {
+        var value_text = window.Blockly.JavaScript.valueToCode(block, 'TEXT', window.Blockly.JavaScript.ORDER_ATOMIC);
+        if (!value_text) {
+          value_text = '""';
+        }
+        var code = 'window.appendToPreview(' + value_text + ');\n';
+        return code;
       };
 
       // Initialize workspace
@@ -121,7 +125,7 @@ export default function Home() {
         </category>
         <category name="Text" colour="#5BA58C">
           <block type="text"></block>
-          <block type="text_print"></block>
+          <block type="preview_print"></block>
           <block type="text_join"></block>
           <block type="text_append"></block>
           <block type="text_length"></block>
@@ -140,8 +144,8 @@ export default function Home() {
       // Clear workspace first
       workspaceRef.current.clear();
       
-      // Create the initial block programmatically
-      const printBlock = workspaceRef.current.newBlock('text_print');
+      // Create the initial block programmatically using our custom preview_print block
+      const printBlock = workspaceRef.current.newBlock('preview_print');
       printBlock.moveBy(50, 50);
       
       const textBlock = workspaceRef.current.newBlock('text');
