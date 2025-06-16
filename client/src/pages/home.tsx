@@ -125,20 +125,29 @@ export default function Home() {
   };
 
   const addInitialBlock = () => {
-    if (!workspaceRef.current) return;
+    if (!workspaceRef.current || !window.Blockly) return;
 
-    const xml = window.Blockly.Xml.textToDom(
-      '<xml xmlns="https://developers.google.com/blockly/xml">' +
-      '<block type="text_print" x="50" y="50">' +
-      '<value name="TEXT">' +
-      '<block type="text">' +
-      '<field name="TEXT">Halo Dunia</field>' +
-      '</block>' +
-      '</value>' +
-      '</block>' +
-      '</xml>'
-    );
-    window.Blockly.Xml.domToWorkspace(xml, workspaceRef.current);
+    try {
+      // Create the initial block programmatically
+      const printBlock = workspaceRef.current.newBlock('text_print');
+      printBlock.moveBy(50, 50);
+      
+      const textBlock = workspaceRef.current.newBlock('text');
+      textBlock.setFieldValue('Halo Dunia', 'TEXT');
+      
+      // Connect the blocks
+      const textOutput = textBlock.outputConnection;
+      const printInput = printBlock.getInput('TEXT').connection;
+      textOutput.connect(printInput);
+      
+      // Initialize the blocks
+      printBlock.initSvg();
+      textBlock.initSvg();
+      printBlock.render();
+      textBlock.render();
+    } catch (error) {
+      console.log('Could not add initial block:', error);
+    }
   };
 
   const handleRun = async () => {
