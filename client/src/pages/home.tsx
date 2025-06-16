@@ -14,6 +14,11 @@ export default function Home() {
   const workspaceRef = useRef<any>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [previewContent, setPreviewContent] = useState<Array<{id: string, text: string, timestamp: string}>>([]);
+  const previewLengthRef = useRef(0);
+
+  useEffect(() => {
+    previewLengthRef.current = previewContent.length;
+  }, [previewContent]);
 
   useEffect(() => {
     // Wait for Blockly to be loaded
@@ -85,11 +90,18 @@ export default function Home() {
       }, 200);
     };
 
+
     // Define global function for preview output
     window.appendToPreview = (text: string) => {
       const id = Date.now().toString();
       const timestamp = new Date().toLocaleTimeString();
-      setPreviewContent(prev => [...prev, { id, text: text || '', timestamp }]);
+      setPreviewContent((prev) => [...prev, { id, text: text || '', timestamp }]);
+    };
+
+    // Redirect any alert calls to the preview panel
+    const originalAlert = window.alert;
+    window.alert = (message?: any) => {
+      window.appendToPreview(String(message ?? ''));
     };
 
     initBlockly();
@@ -102,7 +114,10 @@ export default function Home() {
     };
 
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.alert = originalAlert;
+    };
   }, []);
 
   const getToolboxXml = () => {
@@ -206,7 +221,7 @@ export default function Home() {
       if (!code.trim()) {
         window.appendToPreview('Program kosong - tidak ada blok untuk dijalankan');
       } else {
-        const currentLength = previewContent.length;
+        const currentLength = previewLengthRef.current;
         console.log('About to execute code:', code);
         
         // Execute the generated code
@@ -214,7 +229,7 @@ export default function Home() {
         
         // Check if output was generated after a short delay
         setTimeout(() => {
-          if (previewContent.length === currentLength) {
+          if (previewLengthRef.current === currentLength) {
             window.appendToPreview('Program selesai dijalankan (tidak ada output)');
           }
         }, 50);
