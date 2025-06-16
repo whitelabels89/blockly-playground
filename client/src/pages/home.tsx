@@ -83,7 +83,9 @@ export default function Home() {
       });
 
       // Add initial example block
-      addInitialBlock();
+      setTimeout(() => {
+        addInitialBlock();
+      }, 200);
     };
 
     // Define global function for preview output
@@ -181,11 +183,25 @@ export default function Home() {
     setIsRunning(true);
 
     try {
+      // Re-register generators just before code generation to ensure they exist
+      if (window.Blockly && window.Blockly.JavaScript) {
+        window.Blockly.JavaScript['preview_print'] = function(block: any) {
+          var value_text = window.Blockly.JavaScript.valueToCode(block, 'TEXT', window.Blockly.JavaScript.ORDER_ATOMIC);
+          if (!value_text) {
+            value_text = '""';
+          }
+          var code = 'window.appendToPreview(' + value_text + ');\n';
+          return code;
+        };
+        
+        console.log('Generator re-registered before code generation');
+      }
+
       // Generate JavaScript code from Blockly workspace
       const code = window.Blockly.JavaScript.workspaceToCode(workspaceRef.current);
       
-      console.log('Generated code:', code); // Debug log
-      console.log('Current preview content length:', previewContent.length);
+      console.log('Generated code:', code);
+      console.log('Available generators:', Object.keys(window.Blockly.JavaScript || {}));
       
       // Small delay for better UX
       await new Promise(resolve => setTimeout(resolve, 300));
