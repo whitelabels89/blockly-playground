@@ -40,6 +40,9 @@ export default function Home() {
       // JavaScript generator for print block
       window.Blockly.JavaScript['text_print'] = function(block: any) {
         var value_text = window.Blockly.JavaScript.valueToCode(block, 'TEXT', window.Blockly.JavaScript.ORDER_ATOMIC);
+        if (!value_text) {
+          value_text = '""';
+        }
         var code = 'window.appendToPreview(' + value_text + ');\n';
         return code;
       };
@@ -159,14 +162,27 @@ export default function Home() {
       // Generate JavaScript code from Blockly workspace
       const code = window.Blockly.JavaScript.workspaceToCode(workspaceRef.current);
       
+      console.log('Generated code:', code); // Debug log
+      console.log('Current preview content length:', previewContent.length);
+      
       // Small delay for better UX
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-      if (!code.trim() || !code.includes('appendToPreview')) {
-        window.appendToPreview('Program selesai dijalankan (tidak ada output)');
+      if (!code.trim()) {
+        window.appendToPreview('Program kosong - tidak ada blok untuk dijalankan');
       } else {
+        const currentLength = previewContent.length;
+        console.log('About to execute code:', code);
+        
         // Execute the generated code
         eval(code);
+        
+        // Check if output was generated after a short delay
+        setTimeout(() => {
+          if (previewContent.length === currentLength) {
+            window.appendToPreview('Program selesai dijalankan (tidak ada output)');
+          }
+        }, 50);
       }
     } catch (error: any) {
       console.error('Error executing code:', error);
