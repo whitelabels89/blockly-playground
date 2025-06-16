@@ -85,11 +85,18 @@ export default function Home() {
       }, 200);
     };
 
+
     // Define global function for preview output
     window.appendToPreview = (text: string) => {
       const id = Date.now().toString();
       const timestamp = new Date().toLocaleTimeString();
-      setPreviewContent(prev => [...prev, { id, text: text || '', timestamp }]);
+      setPreviewContent((prev) => [...prev, { id, text: text || '', timestamp }]);
+    };
+
+    // Redirect any alert calls to the preview panel
+    const originalAlert = window.alert;
+    window.alert = (message?: any) => {
+      window.appendToPreview(String(message ?? ''));
     };
 
     initBlockly();
@@ -102,7 +109,10 @@ export default function Home() {
     };
 
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.alert = originalAlert;
+    };
   }, []);
 
   const getToolboxXml = () => {
