@@ -23,19 +23,16 @@ export default function Home() {
         return;
       }
 
-      // Create a custom preview_print block
-      window.Blockly.Blocks['preview_print'] = {
-        init: function() {
-          this.appendValueInput("TEXT")
-            .setCheck("String")
-            .appendField("tampilkan");
-          this.setPreviousStatement(true, null);
-          this.setNextStatement(true, null);
+      // Override the existing text_print block instead of creating a new one
+      if (window.Blockly.Blocks['text_print']) {
+        // Modify the existing block's color and tooltip
+        const originalInit = window.Blockly.Blocks['text_print'].init;
+        window.Blockly.Blocks['text_print'].init = function() {
+          originalInit.call(this);
           this.setColour(160);
           this.setTooltip("Tampilkan teks di panel preview");
-          this.setHelpUrl("");
-        }
-      };
+        };
+      }
 
       // Ensure JavaScript generator is available and register our block
       if (window.Blockly.JavaScript) {
@@ -132,7 +129,7 @@ export default function Home() {
         </category>
         <category name="Text" colour="#5BA58C">
           <block type="text"></block>
-          <block type="preview_print"></block>
+          <block type="text_print"></block>
           <block type="text_join"></block>
           <block type="text_append"></block>
           <block type="text_length"></block>
@@ -151,8 +148,8 @@ export default function Home() {
       // Clear workspace first
       workspaceRef.current.clear();
       
-      // Create the initial block programmatically using our custom preview_print block
-      const printBlock = workspaceRef.current.newBlock('preview_print');
+      // Create the initial block programmatically using text_print block
+      const printBlock = workspaceRef.current.newBlock('text_print');
       printBlock.moveBy(50, 50);
       
       const textBlock = workspaceRef.current.newBlock('text');
@@ -185,7 +182,7 @@ export default function Home() {
     try {
       // Re-register generators just before code generation to ensure they exist
       if (window.Blockly && window.Blockly.JavaScript) {
-        window.Blockly.JavaScript['preview_print'] = function(block: any) {
+        window.Blockly.JavaScript['text_print'] = function(block: any) {
           var value_text = window.Blockly.JavaScript.valueToCode(block, 'TEXT', window.Blockly.JavaScript.ORDER_ATOMIC);
           if (!value_text) {
             value_text = '""';
